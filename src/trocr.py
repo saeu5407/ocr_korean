@@ -77,6 +77,7 @@ if __name__ == '__main__':
     df.reset_index(drop=True, inplace=True)
     df = df.iloc[0:100,:] # for simple test
     """
+    df = df.iloc[0:100, :]  # for simple test
 
     # train test split
     train_df, test_df = train_test_split(df, test_size=0.2)
