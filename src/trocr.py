@@ -60,9 +60,9 @@ if __name__ == '__main__':
 
     # argparse
     parser = argparse.ArgumentParser(description='FineTuning')
-    parser.add_argument('--simple_test', type=bool, default=False)
+    parser.add_argument('--simple_test', type=int, default=0)
     parser.add_argument('--epochs', type=int, default=10)
-    parser.add_argument('--test', type=bool, default=False)
+    parser.add_argument('--test', type=int, default=0)
     args = parser.parse_args()
 
     # base_path
@@ -150,7 +150,7 @@ if __name__ == '__main__':
 
     print("=" * 20)
     print("=" * 20)
-    print("/n/n/n/n/n>>> Start Fine Tunning")
+    print("\n\n\n\n\n>>> Start Fine Tunning")
     print(f">>> Using {device}")
     start_time = time.time()
 
@@ -192,6 +192,9 @@ if __name__ == '__main__':
         print("Validation CER:", valid_cer / len(eval_dataloader))
 
     model.save_pretrained(base_path + "/model/tr_ocr.pt")
+    print(f">>> End. Total Using Time : {time.time() - start_time}")
+    print("=" * 20)
+    print("=" * 20)
 
 # test
 if args.test:
