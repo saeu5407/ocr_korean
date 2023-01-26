@@ -15,6 +15,8 @@ from transformers import ViTFeatureExtractor, TrOCRProcessor, VisionEncoderDecod
 import evaluate
 from datasets import load_metric
 
+import argparse
+
 class IAMDataset(Dataset):
     def __init__(self, root_dir, df, processor, max_target_length=128):
         self.root_dir = root_dir
@@ -55,6 +57,13 @@ def compute_cer(pred_ids, label_ids):
 
 if __name__ == '__main__':
 
+    # argparse
+    parser = argparse.ArgumentParser(description='FineTuning')
+    parser.add_argument('--simple_test', type=bool, default=False)
+    parser.add_argument('--epochs', type=int, default=10)
+    parser.add_argument('--test', type=bool, default=False)
+    args = parser.parse_args()
+
     # base_path
     base_path = os.getcwd().split('/src')[0]
 
@@ -77,7 +86,8 @@ if __name__ == '__main__':
     df.reset_index(drop=True, inplace=True)
     df = df.iloc[0:100,:] # for simple test
     """
-    df = df.iloc[0:100, :]  # for simple test
+    if args.simple_test:
+        df = df.iloc[0:100, :]  # for simple test
 
     # train test split
     train_df, test_df = train_test_split(df, test_size=0.2)
@@ -136,8 +146,9 @@ if __name__ == '__main__':
     # load loss & optimizer
     cer_metric = evaluate.load('cer') # load_metric("cer")
     optimizer = AdamW(model.parameters(), lr=5e-5)
+
     # fine-tunning
-    for epoch in tqdm(range(10)):  # loop over the dataset multiple times
+    for epoch in tqdm(range(args.epochs)):  # loop over the dataset multiple times
         # train
         model.train()
         train_loss = 0.0
@@ -176,10 +187,11 @@ if __name__ == '__main__':
     model.save_pretrained(base_path + "/model/tr_ocr.pt")
 
 # test
-"""
-image = glob.glob(base_path + '/data/train/*.png')[0]
-image = Image.open(image).convert("RGB")
-pixel_values = processor(image, return_tensors="pt").pixel_values
-pred_ids = model.generate(pixel_values.to(device))
-pred_str = processor.batch_decode(pred_ids, skip_special_tokens=True)
-"""
+if args.test:
+    image_path = glob.glob(base_path + '/data/train/*.png')[0]
+    image = Image.open(image_path).convert("RGB")
+    pixel_values = processor(image, return_tensors="pt").pixel_values
+    pred_ids = model.generate(pixel_values.to(device))
+    pred_str = processor.batch_decode(pred_ids, skip_special_tokens=True)
+    print(f"Sample image : {image_path}")
+    print(f"Predict : {pred_str}")
