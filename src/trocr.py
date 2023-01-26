@@ -2,6 +2,7 @@ import os
 import glob
 import pandas as pd
 import sys
+import time
 from tqdm import tqdm
 from PIL import Image
 
@@ -146,6 +147,12 @@ if __name__ == '__main__':
     # load loss & optimizer
     cer_metric = evaluate.load('cer') # load_metric("cer")
     optimizer = AdamW(model.parameters(), lr=5e-5)
+
+    print("=" * 20)
+    print("=" * 20)
+    print("/n/n/n/n/n>>> Start Fine Tunning")
+    print(f">>> Using {device}")
+    start_time = time.time()
 
     # fine-tunning
     for epoch in tqdm(range(args.epochs)):  # loop over the dataset multiple times
