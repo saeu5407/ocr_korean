@@ -191,7 +191,10 @@ if __name__ == '__main__':
 
         print("Validation CER:", valid_cer / len(eval_dataloader))
 
-    model.save_pretrained(base_path + "/model/tr_ocr.pt")
+        model.save_pretrained(base_path + f"/model/tr_ocr_{epoch}.pt")
+        if os.path.isfile(base_path + f"/model/tr_ocr_{epoch - 1}.pt"):
+            os.remove(base_path + f"/model/tr_ocr_{epoch - 1}.pt")
+
     print(f">>> End. Total Using Time : {time.time() - start_time}")
     print("=" * 20)
     print("=" * 20)
