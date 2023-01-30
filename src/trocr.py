@@ -61,9 +61,9 @@ if __name__ == '__main__':
 
     # argparse
     parser = argparse.ArgumentParser(description='FineTuning')
-    parser.add_argument('--simple_test', type=int, default=0)
-    parser.add_argument('--epochs', type=int, default=10)
-    parser.add_argument('--test', type=int, default=0)
+    parser.add_argument('--simple_test', type=int, default=1)
+    parser.add_argument('--epochs', type=int, default=1)
+    parser.add_argument('--test', type=int, default=1)
     parser.add_argument('--save_path', type=str, default=os.getcwd().split('/src')[0] + '/model')
     args = parser.parse_args()
 
@@ -149,7 +149,7 @@ if __name__ == '__main__':
     model.config.vocab_size = model.config.decoder.vocab_size
     # set beam search parameters
     model.config.eos_token_id = processor.tokenizer.sep_token_id
-    model.config.max_length = 20 # 최대 길이 : 여기서는 20자 미만으로 해도 될 듯
+    model.config.max_length = 50 # 최대 길이 : 여기서는 50자 미만으로 해도 될 듯
     model.config.early_stopping = True
     model.config.no_repeat_ngram_size = 3
     model.config.length_penalty = 2.0
@@ -161,15 +161,16 @@ if __name__ == '__main__':
 
     print("=" * 20, flush=True)
     print("=" * 20, flush=True)
-    print("\n\n\n\n\n>>> Start Fine Tunning", flush=True)
+    print(">>> Start Fine Tunning", flush=True)
     print(f">>> Using {device}", flush=True)
     start_time = time.time()
 
     # fine-tunning
-    for epoch in tqdm(range(start_epoch, args.epochs)):  # loop over the dataset multiple times
+    for epoch in range(start_epoch, args.epochs):  # loop over the dataset multiple times
         # train
         model.train()
         train_loss = 0.0
+        pbar = tqdm(train_dataloader)
         for batch in train_dataloader:
             # get the inputs
             for k, v in batch.items():
@@ -183,14 +184,16 @@ if __name__ == '__main__':
             optimizer.zero_grad()
 
             train_loss += loss.item()
+            pbar.set_postfix({'loss': loss.item()})
 
-        print(f"Loss after epoch {epoch}:", train_loss / len(train_dataloader), flush=True)
+        print(f">>> Epoch {epoch} | Loss : {train_loss / len(train_dataloader)}")
 
         # evaluate
         model.eval()
         valid_cer = 0.0
         with torch.no_grad():
-            for batch in eval_dataloader:
+            pbar = tqdm(eval_dataloader)
+            for batch in pbar:
                 # run batch generation
                 outputs = model.generate(batch["pixel_values"].to(device))
                 # compute metrics
@@ -199,8 +202,9 @@ if __name__ == '__main__':
                 except:
                     cer = 1
                 valid_cer += cer
+                pbar.set_postfix({'cer': cer})
 
-        print("Validation CER:", valid_cer / len(eval_dataloader), flush=True)
+        print(f">>> Epoch {epoch} | Valid CER : {valid_cer / len(eval_dataloader)}")
 
         model.save_pretrained(args.save_path + f"/tr_ocr_{epoch}.pt")
         if os.path.isfile(args.save_path + f"/tr_ocr_{epoch - 1}.pt"):
