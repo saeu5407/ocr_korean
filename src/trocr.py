@@ -1,5 +1,6 @@
 import os
 import glob
+import re
 import pandas as pd
 import sys
 import time
@@ -63,6 +64,7 @@ if __name__ == '__main__':
     parser.add_argument('--simple_test', type=int, default=0)
     parser.add_argument('--epochs', type=int, default=10)
     parser.add_argument('--test', type=int, default=0)
+    parser.add_argument('--save_path', type=str, default=os.getcwd().split('/src')[0] + '/model')
     args = parser.parse_args()
 
     # base_path
@@ -102,8 +104,8 @@ if __name__ == '__main__':
     eval_dataset = IAMDataset(root_dir=base_path + '/data',
                                df=test_df,
                                processor=processor)
-    print("Number of training examples:", len(train_dataset))
-    print("Number of validation examples:", len(eval_dataset))
+    print(">>> Number of training examples:", len(train_dataset), flush=True)
+    print(">>> Number of validation examples:", len(eval_dataset), flush=True)
 
     # encoding test
     """
@@ -129,6 +131,15 @@ if __name__ == '__main__':
 
     # load model & setting
     model = VisionEncoderDecoderModel.from_encoder_decoder_pretrained(encode, decode)
+    pretrained_list = glob.glob(args.save_path + '/*.pt')
+    start_epoch = 0
+    if len(pretrained_list) > 0:
+        pretrained_path = pretrained_list[0]
+        start_epoch = int(re.findall('[0-9]+.pt',pretrained_path)[0].replace('.pt','')) + 1
+        model = VisionEncoderDecoderModel.from_pretrained(pretrained_path)
+        print("=" * 20, flush=True)
+        print("=" * 20, flush=True)
+        print(f">>> Existence of model in progress for learning\nEpoch : {start_epoch}", flush=True)
     model.to(device)
 
     # set special tokens used for creating the decoder_input_ids from the labels
@@ -148,14 +159,14 @@ if __name__ == '__main__':
     cer_metric = evaluate.load('cer') # load_metric("cer")
     optimizer = AdamW(model.parameters(), lr=5e-5)
 
-    print("=" * 20)
-    print("=" * 20)
-    print("\n\n\n\n\n>>> Start Fine Tunning")
-    print(f">>> Using {device}")
+    print("=" * 20, flush=True)
+    print("=" * 20, flush=True)
+    print("\n\n\n\n\n>>> Start Fine Tunning", flush=True)
+    print(f">>> Using {device}", flush=True)
     start_time = time.time()
 
     # fine-tunning
-    for epoch in tqdm(range(args.epochs)):  # loop over the dataset multiple times
+    for epoch in tqdm(range(start_epoch, args.epochs)):  # loop over the dataset multiple times
         # train
         model.train()
         train_loss = 0.0
@@ -173,7 +184,7 @@ if __name__ == '__main__':
 
             train_loss += loss.item()
 
-        print(f"Loss after epoch {epoch}:", train_loss / len(train_dataloader))
+        print(f"Loss after epoch {epoch}:", train_loss / len(train_dataloader), flush=True)
 
         # evaluate
         model.eval()
@@ -189,22 +200,22 @@ if __name__ == '__main__':
                     cer = 1
                 valid_cer += cer
 
-        print("Validation CER:", valid_cer / len(eval_dataloader))
+        print("Validation CER:", valid_cer / len(eval_dataloader), flush=True)
 
-        model.save_pretrained(base_path + f"/model/tr_ocr_{epoch}.pt")
-        if os.path.isfile(base_path + f"/model/tr_ocr_{epoch - 1}.pt"):
-            os.remove(base_path + f"/model/tr_ocr_{epoch - 1}.pt")
+        model.save_pretrained(args.save_path + f"/tr_ocr_{epoch}.pt")
+        if os.path.isfile(args.save_path + f"/tr_ocr_{epoch - 1}.pt"):
+            os.remove(args.save_path + f"/tr_ocr_{epoch - 1}.pt")
 
-    print(f">>> End. Total Using Time : {time.time() - start_time}")
-    print("=" * 20)
-    print("=" * 20)
+    print(f">>> End. Total Using Time : {time.time() - start_time}", flush=True)
+    print("=" * 20, flush=True)
+    print("=" * 20, flush=True)
 
-# test
-if args.test:
-    image_path = glob.glob(base_path + '/data/train/*.png')[0]
-    image = Image.open(image_path).convert("RGB")
-    pixel_values = processor(image, return_tensors="pt").pixel_values
-    pred_ids = model.generate(pixel_values.to(device))
-    pred_str = processor.batch_decode(pred_ids, skip_special_tokens=True)
-    print(f"Sample image : {image_path}")
-    print(f"Predict : {pred_str}")
+    # test
+    if args.test:
+        image_path = glob.glob(base_path + '/data/train/*.png')[0]
+        image = Image.open(image_path).convert("RGB")
+        pixel_values = processor(image, return_tensors="pt").pixel_values
+        pred_ids = model.generate(pixel_values.to(device))
+        pred_str = processor.batch_decode(pred_ids, skip_special_tokens=True)
+        print(f"Sample image : {image_path}", flush=True)
+        print(f"Predict : {pred_str}", flush=True)
