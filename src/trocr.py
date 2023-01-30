@@ -123,8 +123,8 @@ if __name__ == '__main__':
     """
 
     # prepare dataloader
-    train_dataloader = DataLoader(train_dataset, batch_size=64, shuffle=True)
-    eval_dataloader = DataLoader(eval_dataset, batch_size=64)
+    train_dataloader = DataLoader(train_dataset, batch_size=32, shuffle=True)
+    eval_dataloader = DataLoader(eval_dataset, batch_size=32)
 
     # device setting
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
