@@ -171,7 +171,7 @@ if __name__ == '__main__':
         model.train()
         train_loss = 0.0
         pbar = tqdm(train_dataloader)
-        for batch in train_dataloader:
+        for batch in pbar:
             # get the inputs
             for k, v in batch.items():
                 batch[k] = v.to(device)
