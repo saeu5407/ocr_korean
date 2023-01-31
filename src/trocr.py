@@ -135,7 +135,7 @@ if __name__ == '__main__':
     pretrained_list = glob.glob(args.save_path + '/*.pt')
     start_epoch = 0
     if len(pretrained_list) > 0:
-        pretrained_path = pretrained_list[0]
+        pretrained_path = pretrained_list[-1]
         start_epoch = int(re.findall('[0-9]+.pt',pretrained_path)[0].replace('.pt','')) + 1
         model = VisionEncoderDecoderModel.from_pretrained(pretrained_path)
         print("=" * 20, flush=True)
