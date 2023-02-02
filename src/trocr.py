@@ -110,7 +110,7 @@ if __name__ == '__main__':
 
     # encoding test
     """
-    encoding = train_dataset[0]
+    encoding = train_dataset[2]
     for k,v in encoding.items():
       print(k, v.shape)
     
@@ -201,6 +201,7 @@ if __name__ == '__main__':
                 try:
                     cer = compute_cer(pred_ids=outputs, label_ids=batch["labels"])
                 except:
+                    print(">>> [Validation Error] calculate cer error, map 1")
                     cer = 1
                 valid_cer += cer
                 pbar.set_postfix({'cer': cer})
