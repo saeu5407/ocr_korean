@@ -67,6 +67,7 @@ if __name__ == '__main__':
     image.save('test_image.jpg', "JPEG")
     pixel_values = processor(image, return_tensors="pt").pixel_values
     pred_ids = model.generate(pixel_values.to(device))
+    pred_ids[pred_ids == -100] = processor.tokenizer.pad_token_id
     pred_str = processor.batch_decode(pred_ids, skip_special_tokens=True)
     print(f"Sample image : {image_path}", flush=True)
     print(f"Predict : {pred_str}", flush=True)
