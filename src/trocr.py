@@ -251,7 +251,7 @@ if __name__ == '__main__':
         per_device_train_batch_size=8,
         per_device_eval_batch_size=8,
         fp16=True,
-        output_dir=args.save_path,
+        output_dir=args.save_path + '/trocr',
         overwrite_output_dir=True,
         logging_steps=2,
         eval_steps=200,
