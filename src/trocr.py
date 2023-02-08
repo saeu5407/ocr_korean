@@ -132,7 +132,7 @@ if __name__ == '__main__':
 
     # load model & setting
     model = VisionEncoderDecoderModel.from_encoder_decoder_pretrained(encode, decode)
-    pretrained_list = glob.glob(args.save_path + '/*.pt')
+    pretrained_list = glob.glob(args.save_path + '/trocr/*.pt')
     start_epoch = 0
     if len(pretrained_list) > 0:
         pretrained_path = pretrained_list[-1]
@@ -244,7 +244,7 @@ if __name__ == '__main__':
     from transformers import Seq2SeqTrainer, Seq2SeqTrainingArguments
 
     training_args = Seq2SeqTrainingArguments(
-        num_train_epochs=50,
+        num_train_epochs=args.epochs,
         predict_with_generate=True,
         save_strategy="epoch",
         evaluation_strategy="steps",
@@ -253,7 +253,7 @@ if __name__ == '__main__':
         fp16=True,
         output_dir=args.save_path + '/trocr',
         overwrite_output_dir=True,
-        logging_steps=2,
+        logging_strategy="epoch",
         eval_steps=200,
         save_total_limit=1,
     )
