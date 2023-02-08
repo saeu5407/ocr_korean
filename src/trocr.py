@@ -124,8 +124,8 @@ if __name__ == '__main__':
     """
 
     # prepare dataloader
-    train_dataloader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True)
-    eval_dataloader = DataLoader(eval_dataset, batch_size=args.batch_size)
+    # train_dataloader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True)
+    # eval_dataloader = DataLoader(eval_dataset, batch_size=args.batch_size)
 
     # device setting
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -166,6 +166,7 @@ if __name__ == '__main__':
     print(f">>> Using {device}", flush=True)
     start_time = time.time()
 
+    '''
     # fine-tunning
     for epoch in range(start_epoch, args.epochs):  # loop over the dataset multiple times
         # train
@@ -225,3 +226,47 @@ if __name__ == '__main__':
         pred_str = processor.batch_decode(pred_ids, skip_special_tokens=True)
         print(f"Sample image : {image_path}", flush=True)
         print(f"Predict : {pred_str}", flush=True)
+    '''
+
+    def compute_metrics(pred):
+        labels_ids = pred.label_ids
+        pred_ids = pred.predictions
+
+        pred_str = processor.batch_decode(pred_ids, skip_special_tokens=True)
+        labels_ids[labels_ids == -100] = processor.tokenizer.pad_token_id
+        label_str = processor.batch_decode(labels_ids, skip_special_tokens=True)
+
+        cer = cer_metric.compute(predictions=pred_str, references=label_str)
+
+        return {"cer": cer}
+
+    from transformers import default_data_collator
+    from transformers import Seq2SeqTrainer, Seq2SeqTrainingArguments
+
+    training_args = Seq2SeqTrainingArguments(
+        num_train_epochs=50,
+        predict_with_generate=True,
+        save_strategy="epoch",
+        evaluation_strategy="steps",
+        per_device_train_batch_size=8,
+        per_device_eval_batch_size=8,
+        fp16=True,
+        output_dir=args.save_path,
+        overwrite_output_dir=True,
+        logging_steps=2,
+        eval_steps=200,
+        save_total_limit=1,
+    )
+
+    # instantiate trainer
+    trainer = Seq2SeqTrainer(
+        model=model,
+        tokenizer=processor.feature_extractor,
+        args=training_args,
+        compute_metrics=compute_metrics,
+        train_dataset=train_dataset,
+        eval_dataset=eval_dataset,
+        data_collator=default_data_collator,
+    )
+
+    trainer.train()
