@@ -247,14 +247,13 @@ if __name__ == '__main__':
         num_train_epochs=args.epochs,
         predict_with_generate=True,
         save_strategy="epoch",
-        evaluation_strategy="steps",
+        evaluation_strategy="epoch",
         per_device_train_batch_size=8,
         per_device_eval_batch_size=8,
         fp16=True,
         output_dir=args.save_path + '/trocr',
         overwrite_output_dir=True,
         logging_strategy="epoch",
-        eval_steps=200,
         save_total_limit=1,
     )
 
